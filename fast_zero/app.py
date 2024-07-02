@@ -76,9 +76,10 @@ def delete_user(user_id: int):
     return {'message': 'User deleted successfully!'}
 
 
-
 # Exercícios
-# Criar um endpoint de GET para pegar um único recurso como users/{id} e fazer seus testes.
+# Criar um endpoint de GET para pegar um
+# único recurso como users/{id} e fazer seus testes.
+
 
 @app.get('/user/{user_id}', response_model=UserPublic)
 def read_user_id(user_id: int):
