@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+from fast_zero.schemas import UserPublic
+
 
 def test_create_user(client):
     response = client.post(
@@ -22,20 +24,20 @@ def test_create_user(client):
 def test_read_users(client):
     response = client.get('/users/')
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        'users': [
-            {
-                'id': 1,
-                'username': 'larissa',
-                'email': 'ribeiro@gmail.com',
-            }
-        ]
-    }
+    assert response.json() == {'users': []}
 
 
-def test_update_user(client):
+def test_read_users_with_user(client, user):
+    user_schema = UserPublic.model_validate(user).model_dump()
+    response = client.get('/users/')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {'users': [user_schema]}
+
+
+def test_update_user(client, user):
     response = client.put(
-        '/user/1',
+        '/users/1',
         json={
             'username': 'bob',
             'email': 'bob@example.com',
@@ -50,10 +52,10 @@ def test_update_user(client):
     }
 
 
-def test_delete_user(client):
+def test_delete_user(client, user):
     response = client.delete('/user/1')
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {'message': 'User deleted successfully!'}
+    assert response.json() == {'message': 'User deleted'}
 
 
 # Exercícios
