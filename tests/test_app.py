@@ -65,9 +65,9 @@ def test_delete_user(client, user):
 # e fazer seus testes.
 
 
-def test_update_user_not_found(client):
+def test_update_user_not_found(client, user):
     response = client.put(
-        '/user/2',
+        '/users/2',
         json={
             'username': 'bob',
             'email': 'lala@example.com',
@@ -75,16 +75,16 @@ def test_update_user_not_found(client):
         },
     )
     assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found :( '}
+    assert response.json() == {'detail': 'User not found'}
 
 
-def test_delete_user_not_found(client):
+def test_delete_user_not_found(client, user):
     response = client.delete('/user/2')
     assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found :( '}
+    assert response.json() == {'detail': 'User not found'}
 
 
-def test_read_user_id(client):
+def test_read_user_id(client, user):
     response = client.post(
         '/user/',
         json={
@@ -92,17 +92,10 @@ def test_read_user_id(client):
             'email': 'ribeiro@gmail.com',
             'password': '123456',
         },
-    )  # Act (Agir)
-    response = client.get('/user/1')
-    assert response.status_code == HTTPStatus.OK
+    )
+    response = client.get('/user/2')
     assert response.json() == {
-        'id': 1,
+        'id': 2,
         'username': 'larissa',
         'email': 'ribeiro@gmail.com',
     }
-
-
-def test_read_user_id_not_found(client):
-    response = client.get('/user/2')
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found :( '}

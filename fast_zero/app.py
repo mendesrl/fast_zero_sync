@@ -26,13 +26,16 @@ def read_users(
 
 
 @app.get('/user/{user_id}', response_model=UserPublic)
-def read_user_id(user_id: int):
-    if user_id > len(DATABASE) or user_id < 1:
+def read_user_id(user_id: int, session: Session = Depends(get_session)):
+    db_user = session.scalar(select(User).where(User.id == user_id))
+    if not db_user:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='User not found :( ',
+            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
         )
-    return DATABASE[user_id - 1]
+
+    session.commit()
+    session.refresh(db_user)
+    return db_user
 
 
 @app.post('/user/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
