@@ -21,8 +21,32 @@ def test_create_user(client):
     }
 
 
-def test_list_users(client):
-    response = client.get('/users/')
+def test_create_user_with_existing_username(client, user):
+    response = client.post(
+        '/user/',
+        json={
+            'username': user.username,
+            'email': user.email,
+            'password': '123456',
+        },
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_create_user_with_existing_email(client, user):
+    response = client.post(
+        '/user/',
+        json={
+            'username': 'larissa',
+            'email': user.email,
+            'password': '123456',
+        },
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_read_users(client):
+    response = client.get('/users')
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'users': []}
 
@@ -35,9 +59,10 @@ def test_list_users_with_user(client, user):
     assert response.json() == {'users': [user_schema]}
 
 
-def test_update_user(client, user):
+def test_update_user(client, user, token):
     response = client.put(
-        '/users/1',
+        f'/users/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'bob',
             'email': 'bob@example.com',
@@ -48,40 +73,43 @@ def test_update_user(client, user):
     assert response.json() == {
         'username': 'bob',
         'email': 'bob@example.com',
-        'id': 1,
+        'id': user.id,
     }
 
 
-def test_delete_user(client, user):
-    response = client.delete('/user/1')
+def test_delete_user(client, user, token):
+    response = client.delete(
+        f'/user/{user.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'message': 'User deleted'}
 
 
-# Exercícios
-# Escrever um teste para o erro de 404 (NOT FOUND) para o endpoint de PUT;
-# Escrever um teste para o erro de 404 (NOT FOUND) para o endpoint de DELETE;
-# Criar um endpoint de GET para pegar um único recurso como users/{id}
-# e fazer seus testes.
-
-
-def test_update_user_not_found(client, user):
+def test_update_user_not_found(client, user, token):
     response = client.put(
-        '/users/2',
+        f'/users/{user.id + 1}',
+        headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'bob',
             'email': 'lala@example.com',
             'password': 'mynewpassword',
         },
     )
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {
+        'detail': 'Not enough permissions to update this user'
+    }
 
 
-def test_delete_user_not_found(client, user):
-    response = client.delete('/user/2')
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {'detail': 'User not found'}
+def test_delete_user_not_found(client, user, token):
+    response = client.delete(
+        f'/user/{user.id + 1}', headers={'Authorization': f'Bearer {token}'}
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {
+        'detail': 'Not enough permissions to update this user'
+    }
 
 
 def test_read_user_id(client, user):
@@ -101,6 +129,12 @@ def test_read_user_id(client, user):
     }
 
 
+def test_read_user_id_not_found(client, user):
+    response = client.get('/user/2')
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'User not found'}
+
+
 def test_get_token(client, user):
     response = client.post(
         '/token',
@@ -111,3 +145,21 @@ def test_get_token(client, user):
     assert response.status_code == HTTPStatus.OK
     assert 'access_token' in token
     assert 'token_type' in token
+
+
+def test_get_token_invalid(client, user):
+    response = client.post(
+        '/token',
+        data={'username': user.username, 'password': 'wrongpassword'},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {'detail': 'Incorrect username or password'}
+
+
+def test_get_token_invalid_username(client, user):
+    response = client.post(
+        '/token',
+        data={'username': 'wrong', 'password': user.clean_password},
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {'detail': 'Incorrect username or password'}

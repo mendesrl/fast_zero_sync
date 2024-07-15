@@ -16,18 +16,14 @@ from fast_zero.security import (
 )
 
 app = FastAPI()
-DATABASE = []
 
 
 @app.get('/users/', response_model=UserList)
-def list_users(
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
-    limit: int = 10,
-    offset: int = 0,
+def read_users(
+    skip: int = 0, limit: int = 100, session: Session = Depends(get_session)
 ):
-    user = session.scalars(select(User).limit(limit).offset(offset))
-    return {'users': user}
+    users = session.scalars(select(User).offset(skip).limit(limit)).all()
+    return {'users': users}
 
 
 # Exercícios
@@ -134,13 +130,13 @@ def login_for_access_token(
     if not user:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail='Incorrect email or password',
+            detail='Incorrect username or password',
         )
 
     if not verify_password(form_data.password, user.password):
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail='Incorrect email or password',
+            detail='Incorrect username or password',
         )
 
     access_token = create_access_token(data={'sub': user.username})
