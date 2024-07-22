@@ -27,8 +27,9 @@ def test_get_current_user(client, user, token):
     }
 
 
-def test_get_username_not_found(client, token):
+def test_get_username_not_found(client, user, token):
     response = client.get(
-        '/users/', headers={'Authorization': f'Bearer {token}'}
+        f'/user/{user.id}', headers={'Authorization': f'Bearer {token}'}
     )
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
