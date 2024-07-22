@@ -1,8 +1,14 @@
 from http import HTTPStatus
 
+import pytest
+from fastapi.exceptions import HTTPException
 from jwt import decode
 
-from fast_zero.security import SECRET_KEY, create_access_token
+from fast_zero.security import (
+    SECRET_KEY,
+    create_access_token,
+    get_current_user,
+)
 
 
 def test_jwt():
@@ -33,3 +39,8 @@ def test_get_username_not_found(client, user, token):
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_get_current_user_deve_dar_erro_de_jwt():
+    with pytest.raises(HTTPException):
+        get_current_user({'batata': 123})
